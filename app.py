@@ -1,36 +1,49 @@
 from flask import Flask, render_template, jsonify
 import psutil
 import platform
+import time
 import os
 
 app = Flask(__name__)
+START_TIME = time.time()
 
 @app.route('/')
 def index():
-    # Thư viện lệnh Docker được phân loại chuyên nghiệp
-    docker_library = {
-        "Cơ bản": [
-            {"cmd": "docker --version", "desc": "Kiểm tra phiên bản Docker đã cài đặt"},
-            {"cmd": "docker pull [image]", "desc": "Tải một Image từ Docker Hub về máy chủ Cloud"}
+    # 1. Thông tin cấu hình hệ thống
+    sys_info = {
+        "node": platform.node(),
+        "os": f"{platform.system()} {platform.release()}",
+        "cpu_count": psutil.cpu_count(logical=True),
+        "total_ram": f"{round(psutil.virtual_memory().total / (1024**3), 2)} GB"
+    }
+    
+    # 2. Thư viện lệnh Docker (Nội dung "To" hơn cho web)
+    docker_lib = {
+        "Container": [
+            {"cmd": "docker ps -a", "desc": "Liệt kê tất cả container"},
+            {"cmd": "docker exec -it [id] /bin/bash", "desc": "Truy cập terminal của container"}
         ],
-        "Vận hành": [
-            {"cmd": "docker run -d -p 80:5000 [img]", "desc": "Chạy Container ở chế độ nền và ánh xạ cổng"},
-            {"cmd": "docker ps -a", "desc": "Liệt kê tất cả Container (đang chạy và đã dừng)"},
-            {"cmd": "docker logs --tail 50 [id]", "desc": "Xem 50 dòng nhật ký mới nhất của Container"}
+        "Images": [
+            {"cmd": "docker build -t [tag] .", "desc": "Build image từ Dockerfile"},
+            {"cmd": "docker images", "desc": "Xem danh sách các image"}
         ],
-        "Dọn dẹp": [
-            {"cmd": "docker system prune", "desc": "Xóa toàn bộ tài nguyên thừa (Image, Container rác)"},
-            {"cmd": "docker stop $(docker ps -q)", "desc": "Dừng tất cả các Container đang hoạt động"}
+        "Network/Volume": [
+            {"cmd": "docker network ls", "desc": "Xem các mạng Docker"},
+            {"cmd": "docker volume prune", "desc": "Xóa toàn bộ volume dư thừa"}
         ]
     }
-    return render_template('index.html', library=docker_library)
+    return render_template('index.html', info=sys_info, library=docker_lib)
 
 @app.route('/api/stats')
 def stats():
+    net = psutil.net_io_counters()
+    uptime = int(time.time() - START_TIME)
     return jsonify(
-        cpu=psutil.cpu_percent(interval=None),
+        cpu=psutil.cpu_percent(),
         ram=psutil.virtual_memory().percent,
-        disk=psutil.disk_usage('/').percent
+        net_in=f"{round(net.bytes_recv / (1024**2), 2)} MB",
+        net_out=f"{round(net.bytes_sent / (1024**2), 2)} MB",
+        uptime=f"{uptime // 60}m {uptime % 60}s"
     )
 
 if __name__ == "__main__":
