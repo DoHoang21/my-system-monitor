@@ -9,35 +9,32 @@ start_time = time.time()
 
 @app.route('/')
 def index():
-    # Thư viện kiến thức Docker & Cloud chuyên sâu
-    knowledge_base = {
-        "Docker Basic": [
-            {"cmd": "docker build -t app .", "desc": "Khởi tạo Image từ Dockerfile"},
-            {"cmd": "docker run -p 80:5000 app", "desc": "Chạy Container với ánh xạ cổng"},
-            {"cmd": "docker ps", "desc": "Xem các Container đang hoạt động"}
-        ],
-        "Docker Advanced": [
-            {"cmd": "docker-compose up -d", "desc": "Triển khai đa dịch vụ (Multi-container)"},
-            {"cmd": "docker network inspect bridge", "desc": "Kiểm tra cấu hình mạng nội bộ"},
-            {"cmd": "docker volume ls", "desc": "Quản lý dữ liệu bền vững (Persistence)"}
-        ],
-        "Cloud Knowledge": [
-            {"term": "PaaS (Platform as a Service)", "desc": "Render cung cấp môi trường để chạy app mà không cần quản trị OS."},
-            {"term": "Virtualization", "desc": "Công nghệ ảo hóa giúp chia sẻ tài nguyên vật lý thành các đơn vị cách ly (Container)."}
-        ]
+    # 1. Thông tin cấu hình hệ thống Cloud (Static Info)
+    sys_info = {
+        "node": platform.node(),
+        "os": f"{platform.system()} {platform.release()}",
+        "cpu_type": platform.processor() or "Cloud-optimized Processor",
+        "cores": psutil.cpu_count(logical=True),
+        "total_ram": f"{round(psutil.virtual_memory().total / (1024**3), 2)} GB",
     }
     
-    # Thông tin phần cứng máy chủ Cloud
-    sys_info = {
-        "os": f"{platform.system()} {platform.release()}",
-        "cpu": platform.processor() or "Cloud-optimized CPU",
-        "cores": psutil.cpu_count(logical=True),
-        "ram_total": f"{round(psutil.virtual_memory().total / (1024**3), 2)} GB"
+    # 2. Thư viện tri thức Docker & Cloud (Encyclopedia)
+    docker_lib = {
+        "Container Life Cycle": [
+            {"cmd": "docker build -t app:v1 .", "desc": "Đóng gói ứng dụng từ Dockerfile thành Image."},
+            {"cmd": "docker run -d --name myapp -p 80:5000 app:v1", "desc": "Khởi chạy Container với chế độ chạy ngầm và ánh xạ cổng."},
+            {"cmd": "docker ps -as", "desc": "Liệt kê các container cùng dung lượng bộ nhớ chiếm dụng."}
+        ],
+        "Cloud Architecture": [
+            {"term": "PaaS (Platform as a Service)", "desc": "Mô hình dịch vụ cho phép triển khai ứng dụng mà không cần quản lý hạ tầng phần cứng."},
+            {"term": "Shared Responsibility Model", "desc": "Mô hình trách nhiệm chung giữa nhà cung cấp Cloud (Render/AWS) và người dùng (Sinh viên)."}
+        ]
     }
-    return render_template('index.html', library=knowledge_base, info=sys_info)
+    return render_template('index.html', info=sys_info, library=docker_lib)
 
 @app.route('/api/stats')
 def stats():
+    # API cung cấp dữ liệu cho biểu đồ Real-time
     net = psutil.net_io_counters()
     uptime = time.time() - start_time
     return jsonify(
@@ -46,7 +43,7 @@ def stats():
         disk=psutil.disk_usage('/').percent,
         net_in=f"{round(net.bytes_recv / (1024**2), 2)} MB",
         net_out=f"{round(net.bytes_sent / (1024**2), 2)} MB",
-        uptime=f"{int(uptime // 60)} phút"
+        uptime=f"{int(uptime // 60)} phút {int(uptime % 60)} giây"
     )
 
 if __name__ == "__main__":
