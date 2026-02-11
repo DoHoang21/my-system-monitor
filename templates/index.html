@@ -2,65 +2,106 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Advanced Cloud Monitor</title>
+    <title>Enterprise Cloud Monitor</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .monitor-card { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; padding: 2rem; }
-        .progress { height: 10px; background-color: #334155; }
-        .status-dot { height: 10px; width: 10px; background-color: #22c55e; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        body { background: #05070a; color: #a9b1d6; font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(22, 27, 34, 0.8); border: 1px solid #30363d; border-radius: 15px; padding: 20px; height: 100%; transition: 0.3s; }
+        .glass-card:hover { border-color: #58a6ff; }
+        .stat-label { color: #8b949e; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 1.8rem; font-weight: 700; color: #ffffff; }
+        .badge-cloud { background: #238636; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
     <div class="container py-5">
         <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1><span class="status-dot"></span>Cloud System Monitor</h1>
-            <span class="badge bg-primary">Node: Render-Docker-Instance</span>
+            <div>
+                <h2 class="text-white mb-0"><i class="fas fa-server me-3 text-primary"></i>Cloud Intelligence</h2>
+                <p class="text-muted">Real-time Container Monitoring Protocol</p>
+            </div>
+            <span class="badge-cloud"><i class="fas fa-cloud me-2"></i>Render Platform - Docker Runtime</span>
         </div>
 
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="monitor-card">
-                    <h5>CPU Usage</h5>
-                    <div class="display-4 fw-bold my-3" id="cpu-text">0%</div>
-                    <div class="progress"><div id="cpu-bar" class="progress-bar bg-info" style="width: 0%"></div></div>
+                <div class="glass-card">
+                    <h6 class="stat-label mb-3">Hardware Info</h6>
+                    <p class="mb-1"><small>OS:</small> <strong>{{ info.os }}</strong></p>
+                    <p class="mb-1"><small>CPU Core:</small> <strong>{{ info.cpu_count }} vCPUs</strong></p>
+                    <p class="mb-1"><small>Total RAM:</small> <strong>{{ info.total_ram }}</strong></p>
+                    <p class="mb-0"><small>Arch:</small> <strong>{{ info.architecture }}</strong></p>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="monitor-card">
-                    <h5>RAM Usage</h5>
-                    <div class="display-4 fw-bold my-3" id="ram-text">0%</div>
-                    <div class="progress"><div id="ram-bar" class="progress-bar bg-success" style="width: 0%"></div></div>
+
+            <div class="col-md-4 text-center">
+                <div class="glass-card d-flex flex-column justify-content-center">
+                    <span class="stat-label">CPU Load</span>
+                    <div class="stat-value" id="cpu-val">0%</div>
+                    <div class="progress mt-2" style="height: 6px;"><div id="cpu-bar" class="progress-bar bg-primary" style="width: 0%"></div></div>
                 </div>
             </div>
+
             <div class="col-md-4">
-                <div class="monitor-card">
-                    <h5>Storage (Root)</h5>
-                    <div class="display-4 fw-bold my-3" id="disk-text">0%</div>
-                    <div class="progress"><div id="disk-bar" class="progress-bar bg-warning" style="width: 0%"></div></div>
+                <div class="glass-card">
+                    <h6 class="stat-label mb-3">Network Traffic</h6>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span><i class="fas fa-arrow-up text-danger me-2"></i>Sent</span>
+                        <strong id="net-sent">0 MB</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span><i class="fas fa-arrow-down text-success me-2"></i>Received</span>
+                        <strong id="net-recv">0 MB</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div class="glass-card">
+                    <h6 class="stat-label mb-4 text-center">Performance Analytics (Live)</h6>
+                    <canvas id="mainChart" height="100"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function updateStats() {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        const mainChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'CPU %', data: [], borderColor: '#58a6ff', backgroundColor: 'rgba(88,166,255,0.1)', fill: true, tension: 0.4 },
+                    { label: 'RAM %', data: [], borderColor: '#238636', tension: 0.4 }
+                ]
+            },
+            options: { scales: { y: { beginAtZero: true, max: 100, grid: { color: '#30363d' } } }, plugins: { legend: { labels: { color: '#8b949e' } } } }
+        });
+
+        function fetchData() {
             $.getJSON('/api/stats', function(data) {
-                // Cập nhật CPU
-                $('#cpu-text').text(data.cpu + '%');
+                $('#cpu-val').text(data.cpu + '%');
                 $('#cpu-bar').css('width', data.cpu + '%');
-                // Cập nhật RAM
-                $('#ram-text').text(data.ram + '%');
-                $('#ram-bar').css('width', data.ram + '%');
-                // Cập nhật Disk
-                $('#disk-text').text(data.disk + '%');
-                $('#disk-bar').css('width', data.disk + '%');
+                $('#net-sent').text(data.net_sent);
+                $('#net-recv').text(data.net_recv);
+
+                const time = new Date().toLocaleTimeString();
+                if (mainChart.data.labels.length > 15) {
+                    mainChart.data.labels.shift();
+                    mainChart.data.datasets[0].data.shift();
+                    mainChart.data.datasets[1].data.shift();
+                }
+                mainChart.data.labels.push(time);
+                mainChart.data.datasets[0].data.push(data.cpu);
+                mainChart.data.datasets[1].data.push(data.ram);
+                mainChart.data.update();
             });
         }
-        // Gọi dữ liệu mới mỗi 2 giây (Real-time)
-        setInterval(updateStats, 2000);
-        updateStats();
+        setInterval(fetchData, 3000);
     </script>
 </body>
 </html>
