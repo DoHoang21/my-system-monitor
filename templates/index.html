@@ -2,75 +2,85 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Enterprise Cloud Monitor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Enterprise Monitor</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        body { background: #05070a; color: #a9b1d6; font-family: 'Inter', sans-serif; }
-        .glass-card { background: rgba(22, 27, 34, 0.8); border: 1px solid #30363d; border-radius: 15px; padding: 20px; height: 100%; transition: 0.3s; }
-        .glass-card:hover { border-color: #58a6ff; }
-        .stat-label { color: #8b949e; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
-        .stat-value { font-size: 1.8rem; font-weight: 700; color: #ffffff; }
-        .badge-cloud { background: #238636; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; }
+        body { background: #0d1117; color: #c9d1d9; font-family: 'Inter', sans-serif; }
+        .glass-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; height: 100%; }
+        .stat-label { color: #8b949e; font-size: 0.8rem; text-transform: uppercase; font-weight: 600; }
+        .stat-value { font-size: 1.8rem; font-weight: 700; color: #58a6ff; }
+        .node-badge { background: #238636; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
     </style>
 </head>
 <body>
     <div class="container py-5">
-        <div class="d-flex justify-content-between align-items-center mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h2 class="text-white mb-0"><i class="fas fa-server me-3 text-primary"></i>Cloud Intelligence</h2>
-                <p class="text-muted">Real-time Container Monitoring Protocol</p>
+                <h2 class="text-white"><i class="fas fa-microchip me-2 text-primary"></i>Cloud Intelligence</h2>
+                <p class="text-muted small">Containerized System Monitoring Protocol</p>
             </div>
-            <span class="badge-cloud"><i class="fas fa-cloud me-2"></i>Render Platform - Docker Runtime</span>
+            <div class="text-end">
+                <span class="node-badge">Node: {{ info.node }}</span>
+                <div id="uptime" class="text-muted small mt-2">Uptime: 0m 0s</div>
+            </div>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="glass-card">
+                    <span class="stat-label">OS Environment</span>
+                    <div class="mt-2 small text-white">{{ info.os }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card">
+                    <span class="stat-label">CPU Infrastructure</span>
+                    <div class="mt-2 small text-white">{{ info.cpu_cores }} Cores / {{ info.cpu_threads }} Threads</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card text-center">
+                    <span class="stat-label">Network Out</span>
+                    <div id="net-sent" class="text-danger fw-bold mt-1">0 MB</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card text-center">
+                    <span class="stat-label">Network In</span>
+                    <div id="net-recv" class="text-success fw-bold mt-1">0 MB</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-8">
+                <div class="glass-card">
+                    <span class="stat-label mb-3 d-block">Real-time Performance (CPU & RAM)</span>
+                    <canvas id="performanceChart" height="150"></canvas>
+                </div>
+            </div>
             <div class="col-md-4">
-                <div class="glass-card">
-                    <h6 class="stat-label mb-3">Hardware Info</h6>
-                    <p class="mb-1"><small>OS:</small> <strong>{{ info.os }}</strong></p>
-                    <p class="mb-1"><small>CPU Core:</small> <strong>{{ info.cpu_count }} vCPUs</strong></p>
-                    <p class="mb-1"><small>Total RAM:</small> <strong>{{ info.total_ram }}</strong></p>
-                    <p class="mb-0"><small>Arch:</small> <strong>{{ info.architecture }}</strong></p>
-                </div>
-            </div>
-
-            <div class="col-md-4 text-center">
-                <div class="glass-card d-flex flex-column justify-content-center">
-                    <span class="stat-label">CPU Load</span>
-                    <div class="stat-value" id="cpu-val">0%</div>
-                    <div class="progress mt-2" style="height: 6px;"><div id="cpu-bar" class="progress-bar bg-primary" style="width: 0%"></div></div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="glass-card">
-                    <h6 class="stat-label mb-3">Network Traffic</h6>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span><i class="fas fa-arrow-up text-danger me-2"></i>Sent</span>
-                        <strong id="net-sent">0 MB</strong>
+                <div class="glass-card d-flex flex-column justify-content-center align-items-center">
+                    <span class="stat-label">RAM Usage</span>
+                    <div id="ram-val" class="stat-value">0%</div>
+                    <div class="w-100 progress mt-2" style="height: 8px;">
+                        <div id="ram-bar" class="progress-bar bg-primary" style="width: 0%"></div>
                     </div>
-                    <div class="d-flex justify-content-between">
-                        <span><i class="fas fa-arrow-down text-success me-2"></i>Received</span>
-                        <strong id="net-recv">0 MB</strong>
+                    <div class="mt-4 text-muted small text-center">
+                        <i class="fas fa-memory me-1"></i> Total: {{ info.total_ram }}
                     </div>
-                </div>
-            </div>
-
-            <div class="col-md-12">
-                <div class="glass-card">
-                    <h6 class="stat-label mb-4 text-center">Performance Analytics (Live)</h6>
-                    <canvas id="mainChart" height="100"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const ctx = document.getElementById('mainChart').getContext('2d');
-        const mainChart = new Chart(ctx, {
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        const chart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: [],
@@ -79,29 +89,30 @@
                     { label: 'RAM %', data: [], borderColor: '#238636', tension: 0.4 }
                 ]
             },
-            options: { scales: { y: { beginAtZero: true, max: 100, grid: { color: '#30363d' } } }, plugins: { legend: { labels: { color: '#8b949e' } } } }
+            options: { scales: { y: { beginAtZero: true, max: 100, grid: { color: '#30363d' } }, x: { grid: { display: false } } }, plugins: { legend: { labels: { color: '#8b949e' } } } }
         });
 
-        function fetchData() {
+        function update() {
             $.getJSON('/api/stats', function(data) {
-                $('#cpu-val').text(data.cpu + '%');
-                $('#cpu-bar').css('width', data.cpu + '%');
+                $('#ram-val').text(data.ram + '%');
+                $('#ram-bar').css('width', data.ram + '%');
                 $('#net-sent').text(data.net_sent);
                 $('#net-recv').text(data.net_recv);
+                $('#uptime').text('Uptime: ' + data.uptime);
 
-                const time = new Date().toLocaleTimeString();
-                if (mainChart.data.labels.length > 15) {
-                    mainChart.data.labels.shift();
-                    mainChart.data.datasets[0].data.shift();
-                    mainChart.data.datasets[1].data.shift();
+                const now = new Date().toLocaleTimeString();
+                if (chart.data.labels.length > 15) {
+                    chart.data.labels.shift();
+                    chart.data.datasets[0].data.shift();
+                    chart.data.datasets[1].data.shift();
                 }
-                mainChart.data.labels.push(time);
-                mainChart.data.datasets[0].data.push(data.cpu);
-                mainChart.data.datasets[1].data.push(data.ram);
-                mainChart.data.update();
+                chart.data.labels.push(now);
+                chart.data.datasets[0].data.push(data.cpu);
+                chart.data.datasets[1].data.push(data.ram);
+                chart.update();
             });
         }
-        setInterval(fetchData, 3000);
+        setInterval(update, 3000);
     </script>
 </body>
 </html>
