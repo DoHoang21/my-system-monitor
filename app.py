@@ -5,45 +5,48 @@ import time
 import os
 
 app = Flask(__name__)
-START_TIME = time.time()
+start_time = time.time()
 
 @app.route('/')
 def index():
-    # 1. Thông tin cấu hình hệ thống
-    sys_info = {
-        "node": platform.node(),
-        "os": f"{platform.system()} {platform.release()}",
-        "cpu_count": psutil.cpu_count(logical=True),
-        "total_ram": f"{round(psutil.virtual_memory().total / (1024**3), 2)} GB"
-    }
-    
-    # 2. Thư viện lệnh Docker (Nội dung "To" hơn cho web)
-    docker_lib = {
-        "Container": [
-            {"cmd": "docker ps -a", "desc": "Liệt kê tất cả container"},
-            {"cmd": "docker exec -it [id] /bin/bash", "desc": "Truy cập terminal của container"}
+    # Thư viện kiến thức Docker & Cloud chuyên sâu
+    knowledge_base = {
+        "Docker Basic": [
+            {"cmd": "docker build -t app .", "desc": "Khởi tạo Image từ Dockerfile"},
+            {"cmd": "docker run -p 80:5000 app", "desc": "Chạy Container với ánh xạ cổng"},
+            {"cmd": "docker ps", "desc": "Xem các Container đang hoạt động"}
         ],
-        "Images": [
-            {"cmd": "docker build -t [tag] .", "desc": "Build image từ Dockerfile"},
-            {"cmd": "docker images", "desc": "Xem danh sách các image"}
+        "Docker Advanced": [
+            {"cmd": "docker-compose up -d", "desc": "Triển khai đa dịch vụ (Multi-container)"},
+            {"cmd": "docker network inspect bridge", "desc": "Kiểm tra cấu hình mạng nội bộ"},
+            {"cmd": "docker volume ls", "desc": "Quản lý dữ liệu bền vững (Persistence)"}
         ],
-        "Network/Volume": [
-            {"cmd": "docker network ls", "desc": "Xem các mạng Docker"},
-            {"cmd": "docker volume prune", "desc": "Xóa toàn bộ volume dư thừa"}
+        "Cloud Knowledge": [
+            {"term": "PaaS (Platform as a Service)", "desc": "Render cung cấp môi trường để chạy app mà không cần quản trị OS."},
+            {"term": "Virtualization", "desc": "Công nghệ ảo hóa giúp chia sẻ tài nguyên vật lý thành các đơn vị cách ly (Container)."}
         ]
     }
-    return render_template('index.html', info=sys_info, library=docker_lib)
+    
+    # Thông tin phần cứng máy chủ Cloud
+    sys_info = {
+        "os": f"{platform.system()} {platform.release()}",
+        "cpu": platform.processor() or "Cloud-optimized CPU",
+        "cores": psutil.cpu_count(logical=True),
+        "ram_total": f"{round(psutil.virtual_memory().total / (1024**3), 2)} GB"
+    }
+    return render_template('index.html', library=knowledge_base, info=sys_info)
 
 @app.route('/api/stats')
 def stats():
     net = psutil.net_io_counters()
-    uptime = int(time.time() - START_TIME)
+    uptime = time.time() - start_time
     return jsonify(
         cpu=psutil.cpu_percent(),
         ram=psutil.virtual_memory().percent,
+        disk=psutil.disk_usage('/').percent,
         net_in=f"{round(net.bytes_recv / (1024**2), 2)} MB",
         net_out=f"{round(net.bytes_sent / (1024**2), 2)} MB",
-        uptime=f"{uptime // 60}m {uptime % 60}s"
+        uptime=f"{int(uptime // 60)} phút"
     )
 
 if __name__ == "__main__":
