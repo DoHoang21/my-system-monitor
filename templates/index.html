@@ -2,21 +2,65 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Cloud System Monitor</title>
+    <title>Advanced Cloud Monitor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #f0f2f5; }
-        .container { margin-top: 50px; background: white; display: inline-block; padding: 40px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .metric { font-size: 2em; color: #007bff; font-weight: bold; }
+        body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .monitor-card { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; padding: 2rem; }
+        .progress { height: 10px; background-color: #334155; }
+        .status-dot { height: 10px; width: 10px; background-color: #22c55e; border-radius: 50%; display: inline-block; margin-right: 5px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Giám sát tài nguyên Cloud</h1>
-        <hr>
-        <p>Tốc độ CPU hiện tại:</p>
-        <div class="metric">{{ cpu }}%</div>
-        <p>Dung lượng RAM đã dùng:</p>
-        <div class="metric">{{ ram }}%</div>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h1><span class="status-dot"></span>Cloud System Monitor</h1>
+            <span class="badge bg-primary">Node: Render-Docker-Instance</span>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="monitor-card">
+                    <h5>CPU Usage</h5>
+                    <div class="display-4 fw-bold my-3" id="cpu-text">0%</div>
+                    <div class="progress"><div id="cpu-bar" class="progress-bar bg-info" style="width: 0%"></div></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="monitor-card">
+                    <h5>RAM Usage</h5>
+                    <div class="display-4 fw-bold my-3" id="ram-text">0%</div>
+                    <div class="progress"><div id="ram-bar" class="progress-bar bg-success" style="width: 0%"></div></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="monitor-card">
+                    <h5>Storage (Root)</h5>
+                    <div class="display-4 fw-bold my-3" id="disk-text">0%</div>
+                    <div class="progress"><div id="disk-bar" class="progress-bar bg-warning" style="width: 0%"></div></div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+        function updateStats() {
+            $.getJSON('/api/stats', function(data) {
+                // Cập nhật CPU
+                $('#cpu-text').text(data.cpu + '%');
+                $('#cpu-bar').css('width', data.cpu + '%');
+                // Cập nhật RAM
+                $('#ram-text').text(data.ram + '%');
+                $('#ram-bar').css('width', data.ram + '%');
+                // Cập nhật Disk
+                $('#disk-text').text(data.disk + '%');
+                $('#disk-bar').css('width', data.disk + '%');
+            });
+        }
+        // Gọi dữ liệu mới mỗi 2 giây (Real-time)
+        setInterval(updateStats, 2000);
+        updateStats();
+    </script>
 </body>
 </html>
