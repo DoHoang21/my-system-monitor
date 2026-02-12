@@ -1,17 +1,18 @@
-# Sử dụng Python bản nhẹ
+# Bước 1: Sử dụng hình ảnh Python siêu nhẹ
 FROM python:3.9-slim
 
-# Tạo thư mục app trong container
+# Bước 2: Thiết lập thư mục làm việc trong Container
 WORKDIR /app
 
-# Copy code vào trong container
-COPY . .
-
-# Cài đặt thư viện
+# Bước 3: Copy file danh sách thư viện và cài đặt
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Mở cổng 5000
+# Bước 4: Copy toàn bộ mã nguồn vào Container
+COPY . .
+
+# Bước 5: Khai báo cổng ứng dụng
 EXPOSE 5000
 
-# Lệnh khởi chạy
+# Bước 6: Lệnh chạy ứng dụng
 CMD ["python", "app.py"]
